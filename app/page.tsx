@@ -151,16 +151,19 @@ export default function BVKNexusPlatform() {
     setApiCalls(0)
     setElapsedTime(0)
 
-    addTerminalLog("$ NEXUS SYSTEM INITIALIZING...")
+    addTerminalLog("$ NEXUS 8K ULTRA HD SYSTEM INITIALIZING...")
     addTerminalLog(`$ ${NEXUS_ROBOTS.length} NEXUS Robots loaded`)
     addTerminalLog(`$ ${VIRTUAL_ASSISTANTS.length} Virtual Assistants activated`)
     addTerminalLog(`$ ${FRAMEWORKS.length} Frameworks ready`)
+    addTerminalLog("$ 8K VIDEO support: ENABLED")
+    addTerminalLog("$ 8K IMAGE support: ENABLED")
+    addTerminalLog("$ CSS ANIMATIONS: ENABLED")
     addTerminalLog(`$ API: ${REAL_API.name}`)
     addTerminalLog(`$ Model: ${REAL_API.model}`)
     addTerminalLog("$ Connection: SUCCESS")
     addTerminalLog(`$ Project: "${input}"`)
 
-    const pageTypes = ["index", "dashboard", "pricing", "contact", "features"]
+    const pageTypes = ["index", "dashboard", "pricing", "contact", "features", "gallery"]
     const allPages: Record<string, string> = {}
 
     for (const pageType of pageTypes) {
@@ -326,7 +329,7 @@ export default function BVKNexusPlatform() {
               <h1 className="text-lg font-black bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
                 BVK-8.3 NEXUS
               </h1>
-              <p className="text-[10px] text-gray-500">20 Robots + 20 Assistants + 10 Frameworks</p>
+              <p className="text-[10px] text-gray-500">8K Video + Images + Animations</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
