@@ -61,8 +61,8 @@ const FRAMEWORKS = [
 
 // REAL API CONFIG - OpenAI via Vercel AI Gateway (Zero Config)
 const REAL_API = {
-  name: "GPT-4o Mini",
-  model: "openai/gpt-4o-mini",
+  name: "GPT-5 Mini",
+  model: "openai/gpt-5-mini",
   endpoint: "/api/generate",
   status: "connected",
 }

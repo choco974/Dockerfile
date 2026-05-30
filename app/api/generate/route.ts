@@ -6,8 +6,6 @@ export async function POST(request: Request) {
   try {
     const { prompt, siteName, pageType, isModification, existingCode } = await request.json()
 
-    console.log("[v0] API generate called:", { siteName, pageType, isModification })
-
     const pagePrompts: Record<string, string> = {
       index: `Create a COMPLETE professional homepage HTML5 for "${siteName}".
 CLIENT DESCRIPTION: ${prompt}
@@ -122,24 +120,20 @@ You return ONLY raw HTML code, nothing else.`
       ? modificationPrompt
       : pagePrompts[pageType] || pagePrompts.index
 
-    console.log("[v0] Calling AI model: openai/gpt-4o-mini")
-
     const result = streamText({
-      model: "openai/gpt-4o-mini",
+      model: "openai/gpt-5-mini",
       system: systemPrompt,
       prompt: userPrompt,
       temperature: 0.7,
       maxOutputTokens: 8000,
     })
 
-    console.log("[v0] Stream started successfully")
     return result.toTextStreamResponse()
   } catch (error) {
-    console.error("[v0] API generate error:", error)
+    console.error("[v0] API error:", error)
     return new Response(
       JSON.stringify({
         error: error instanceof Error ? error.message : "Generation failed",
-        details: String(error)
       }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     )
