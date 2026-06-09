@@ -187,7 +187,7 @@ export default function BVKNexusPlatform() {
         }
 
         setApiCalls(prev => prev + 1)
-        addTerminalLog(`$ API call SUCCESS`)
+        addTerminalLog(`$ Streaming response...`)
 
         const reader = response.body?.getReader()
         const decoder = new TextDecoder()
@@ -202,6 +202,13 @@ export default function BVKNexusPlatform() {
             setGeneratedPages({ ...allPages })
             setLinesOfCode(Object.values(allPages).reduce((sum, code) => sum + code.split("\n").length, 0))
           }
+        }
+
+        // Detect generation errors surfaced through the stream
+        const errorMatch = fullCode.match(/<!-- GENERATION_ERROR: ([\s\S]*?) -->/)
+        if (errorMatch || !fullCode.trim()) {
+          const reason = errorMatch ? errorMatch[1] : "Empty response from model"
+          throw new Error(reason)
         }
 
         addTerminalLog(`$ ${pageType}.html: ${fullCode.split("\n").length} lines`)
@@ -257,6 +264,11 @@ export default function BVKNexusPlatform() {
           fullCode += decoder.decode(value)
           setGeneratedPages(prev => ({ ...prev, [activePageTab]: fullCode }))
         }
+      }
+
+      const errorMatch = fullCode.match(/<!-- GENERATION_ERROR: ([\s\S]*?) -->/)
+      if (errorMatch || !fullCode.trim()) {
+        throw new Error(errorMatch ? errorMatch[1] : "Empty response from model")
       }
 
       setApiCalls(prev => prev + 1)

@@ -208,15 +208,52 @@ You return ONLY raw HTML code with full 8K multimedia support, nothing else.`
       ? modificationPrompt
       : pagePrompts[pageType] || pagePrompts.index
 
+    let streamError: string | null = null
+
     const result = streamText({
       model: "openai/gpt-5-mini",
       system: systemPrompt,
       prompt: userPrompt,
       maxOutputTokens: 8000,
+      onError: ({ error }) => {
+        console.error("[v0] streamText error:", error)
+        streamError = error instanceof Error ? error.message : "Generation failed"
+      },
     })
 
-    return result.toTextStreamResponse()
+    // Stream the text manually so we can surface mid-stream errors (e.g. AI
+    // Gateway credit/quota errors) to the client instead of silently ending
+    // with an empty 200 response.
+    const encoder = new TextEncoder()
+    const stream = new ReadableStream<Uint8Array>({
+      async start(controller) {
+        try {
+          for await (const chunk of result.textStream) {
+            controller.enqueue(encoder.encode(chunk))
+          }
+        } catch (error) {
+          if (!streamError) {
+            streamError = error instanceof Error ? error.message : "Generation failed"
+          }
+        } finally {
+          if (streamError) {
+            controller.enqueue(
+              encoder.encode(`<!-- GENERATION_ERROR: ${streamError} -->`)
+            )
+          }
+          controller.close()
+        }
+      },
+    })
+
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "no-cache",
+      },
+    })
   } catch (error) {
+    console.error("[v0] generate route error:", error)
     return new Response(
       JSON.stringify({
         error: error instanceof Error ? error.message : "Generation failed",
