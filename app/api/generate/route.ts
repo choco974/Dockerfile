@@ -209,10 +209,9 @@ You return ONLY raw HTML code with full 8K multimedia support, nothing else.`
       : pagePrompts[pageType] || pagePrompts.index
 
     const result = streamText({
-      model: "google/gemini-3-flash",
+      model: "openai/gpt-5-mini",
       system: systemPrompt,
       prompt: userPrompt,
-      temperature: 0.7,
       maxOutputTokens: 8000,
     })
 
