@@ -61,9 +61,10 @@ const FRAMEWORKS = [
 
 // REAL API CONFIG - OpenAI via Vercel AI Gateway (Zero Config)
 const REAL_API = {
-  name: "GPT-5 Mini",
-  model: "openai/gpt-5-mini",
+  name: "GPT-5",
+  model: "openai/gpt-5",
   endpoint: "/api/generate",
+  cloneEndpoint: "/api/clone",
   status: "connected",
 }
 
@@ -90,16 +91,21 @@ export default function BVKNexusPlatform() {
   const terminalRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Rotate active robots and assistants
+  // Robots/assistants only show as active while a real generation is running
   useEffect(() => {
+    if (!isGenerating) {
+      setActiveRobots(NEXUS_ROBOTS.slice(0, 6))
+      setActiveAssistants(VIRTUAL_ASSISTANTS.slice(0, 6))
+      return
+    }
     const interval = setInterval(() => {
       const shuffledRobots = [...NEXUS_ROBOTS].sort(() => Math.random() - 0.5)
       const shuffledAssistants = [...VIRTUAL_ASSISTANTS].sort(() => Math.random() - 0.5)
       setActiveRobots(shuffledRobots.slice(0, 6))
       setActiveAssistants(shuffledAssistants.slice(0, 6))
-    }, 2000)
+    }, 1500)
     return () => clearInterval(interval)
-  }, [])
+  }, [isGenerating])
 
   // Real elapsed time counter
   useEffect(() => {
@@ -151,16 +157,9 @@ export default function BVKNexusPlatform() {
     setApiCalls(0)
     setElapsedTime(0)
 
-    addTerminalLog("$ NEXUS 8K ULTRA HD SYSTEM INITIALIZING...")
-    addTerminalLog(`$ ${NEXUS_ROBOTS.length} NEXUS Robots loaded`)
-    addTerminalLog(`$ ${VIRTUAL_ASSISTANTS.length} Virtual Assistants activated`)
-    addTerminalLog(`$ ${FRAMEWORKS.length} Frameworks ready`)
-    addTerminalLog("$ 8K VIDEO support: ENABLED")
-    addTerminalLog("$ 8K IMAGE support: ENABLED")
-    addTerminalLog("$ CSS ANIMATIONS: ENABLED")
-    addTerminalLog(`$ API: ${REAL_API.name}`)
-    addTerminalLog(`$ Model: ${REAL_API.model}`)
-    addTerminalLog("$ Connection: SUCCESS")
+    addTerminalLog("$ NEXUS engine starting...")
+    addTerminalLog(`$ Model: ${REAL_API.model} (Vercel AI Gateway)`)
+    addTerminalLog(`$ Endpoint: ${REAL_API.endpoint}`)
     addTerminalLog(`$ Project: "${input}"`)
 
     const pageTypes = ["index", "dashboard", "pricing", "contact", "features", "gallery"]
@@ -216,12 +215,41 @@ export default function BVKNexusPlatform() {
     setImportedFile(null)
   }
 
-  // Clone site
+  // Clone site - REAL: fetches the live HTML source of the target URL
   const cloneSite = async () => {
     if (!urlToClone.trim()) return
-    addTerminalLog(`$ CLONING: ${urlToClone}`)
-    setInput(`Clone and recreate: ${urlToClone}`)
-    await generateSite()
+
+    setIsGenerating(true)
+    addTerminalLog(`$ Fetching live source: ${urlToClone}`)
+
+    try {
+      const res = await fetch(REAL_API.cloneEndpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: urlToClone }),
+      })
+
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Clone failed")
+
+      addTerminalLog(`$ Fetched "${data.title}" — ${data.bytes} bytes, ${data.lines} lines`)
+      setApiCalls((prev) => prev + 1)
+
+      // The cloned page becomes a real, viewable page
+      setGeneratedPages((prev) => ({ ...prev, cloned: data.html }))
+      setActivePageTab("cloned")
+      setLinesOfCode(data.lines)
+      setViewMode("preview")
+
+      // Make the imported source available so the AI can recreate/improve it
+      setImportedFile(data.html.substring(0, 8000))
+      setInput(`Recreate and improve this cloned website: ${data.title} (${data.url})`)
+      addTerminalLog(`$ Clone ready. Use "Generate" to rebuild it with the AI engine.`)
+    } catch (error) {
+      addTerminalLog(`$ ERROR: ${error instanceof Error ? error.message : "Clone failed"}`)
+    }
+
+    setIsGenerating(false)
   }
 
   // Modify code
@@ -481,8 +509,30 @@ export default function BVKNexusPlatform() {
               </pre>
             )}
             {viewMode === "3d" && (
-              <div className="h-full flex items-center justify-center bg-gradient-to-br from-cyan-900/20 to-purple-900/20">
-                <Box className="w-16 h-16 text-cyan-400 animate-spin" style={{ animationDuration: "8s" }} />
+              <div
+                className="h-full flex items-center justify-center bg-gradient-to-br from-cyan-900/20 to-purple-900/20 overflow-hidden"
+                style={{ perspective: "1600px" }}
+              >
+                {currentCode ? (
+                  <iframe
+                    srcDoc={currentCode}
+                    title="3D preview"
+                    sandbox="allow-scripts"
+                    className="bg-white shadow-2xl shadow-cyan-500/30"
+                    style={{
+                      width: "1280px",
+                      height: "900px",
+                      transform: "rotateX(8deg) rotateY(-22deg) scale(0.62)",
+                      transformOrigin: "center center",
+                      borderRadius: "12px",
+                    }}
+                  />
+                ) : (
+                  <div className="flex flex-col items-center gap-2 text-gray-500">
+                    <Box className="w-12 h-12 text-cyan-400/50" />
+                    <p className="text-xs">Generate a page to view it in 3D</p>
+                  </div>
+                )}
               </div>
             )}
           </div>
