@@ -209,10 +209,11 @@ You return ONLY raw HTML code with full 8K multimedia support, nothing else.`
       : pagePrompts[pageType] || pagePrompts.index
 
     const result = streamText({
-      model: "openai/gpt-5-mini",
+      model: "openai/gpt-5",
       system: systemPrompt,
       prompt: userPrompt,
-      maxOutputTokens: 8000,
+      maxOutputTokens: 32000,
+      temperature: 0.7,
     })
 
     return result.toTextStreamResponse()
